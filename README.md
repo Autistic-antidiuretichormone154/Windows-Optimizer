@@ -13,7 +13,7 @@ A comprehensive, modular Windows 10/11 optimization and setup utility designed f
 ### Option 1: The "One-Liner" (Recommended)
 Open **PowerShell as Administrator** and run:
 ```powershell
-iwr -useb https://raw.githubusercontent.com/NishantJLU/Windows-Optimizer/main/Run.ps1 | iex
+irm nishantjlu.github.io/Windows-Optimizer/Run.ps1 | iex
 ```
 *Note: This downloads the latest components to a temporary folder and launches the utility.*
 
