@@ -1,0 +1,18 @@
+# WinOptimizer .gitignore
+
+# Local data directories created by the script
+/logs/
+/backups/
+
+# System specific
+C:/WinOptimizer/
+
+# Temporary files
+*.log
+*.tmp
+*.reg
+
+# Windows thumbnails
+Thumbs.db
+ehthumbs.db
+Desktop.ini
