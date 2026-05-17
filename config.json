@@ -1,29 +1,36 @@
 {
-    "Version": "2.0.0",
-    "Bloatware": [
-        "Microsoft.XboxApp", "Microsoft.XboxGameOverlay", "Microsoft.XboxGamingOverlay",
-        "Microsoft.XboxIdentityProvider", "Microsoft.Xbox.TCUI", "Microsoft.MicrosoftTeams",
-        "Microsoft.BingWeather", "Microsoft.BingNews", "Microsoft.BingFinance",
-        "Microsoft.GetHelp", "Microsoft.Getstarted", "Microsoft.MicrosoftSolitaireCollection",
-        "Microsoft.People", "Microsoft.WindowsFeedbackHub", "Microsoft.ZuneMusic", "Microsoft.ZuneVideo",
-        "Microsoft.WindowsMaps", "Microsoft.YourPhone", "Microsoft.SkypeApp"
-    ],
+    "Version": "2.1.0",
+    "Profiles": {
+        "Minimalist": {
+            "Description": "Basic debloat and privacy only.",
+            "Bloatware": ["Microsoft.XboxApp", "Microsoft.XboxGameOverlay", "Microsoft.XboxGamingOverlay", "Microsoft.ZuneMusic", "Microsoft.ZuneVideo"],
+            "DevApps": []
+        },
+        "Gamer": {
+            "Description": "Focus on performance, removes all social/Xbox bloat.",
+            "Bloatware": ["Microsoft.XboxApp", "Microsoft.XboxGameOverlay", "Microsoft.XboxGamingOverlay", "Microsoft.XboxIdentityProvider", "Microsoft.Xbox.TCUI", "Microsoft.MicrosoftTeams", "Microsoft.BingWeather", "Microsoft.BingNews", "Microsoft.BingFinance", "Microsoft.People", "Microsoft.WindowsFeedbackHub"],
+            "DevApps": []
+        },
+        "Developer": {
+            "Description": "Installs common dev tools and applies power-user tweaks.",
+            "Bloatware": ["Microsoft.MicrosoftTeams", "Microsoft.BingNews", "Microsoft.BingFinance", "Microsoft.GetHelp"],
+            "DevApps": [
+                { "Id": "Git.Git", "Name": "Git" },
+                { "Id": "OpenJS.NodeJS.LTS", "Name": "NodeJS" },
+                { "Id": "Python.Python.3", "Name": "Python" },
+                { "Id": "Microsoft.VisualStudioCode", "Name": "VSCode" },
+                { "Id": "Docker.DockerDesktop", "Name": "Docker Desktop" }
+            ]
+        }
+    },
     "PrivacyTweaks": [
         { "P": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection", "N": "AllowTelemetry", "V": 0, "T": "DWord", "D": "Telemetry (Policies)" },
         { "P": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\DataCollection", "N": "AllowTelemetry", "V": 0, "T": "DWord", "D": "Telemetry (System)" },
         { "P": "HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo", "N": "Enabled", "V": 0, "T": "DWord", "D": "Advertising ID" },
         { "P": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System", "N": "EnableActivityFeed", "V": 0, "T": "DWord", "D": "Activity Feed" },
-        { "P": "HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Search", "N": "BingSearchEnabled", "V": 0, "T": "DWord", "D": "Bing Search" },
-        { "P": "HKCU:\\Control Panel\\International\\User Profile", "N": "HttpAcceptLanguageOptOut", "V": 1, "T": "DWord", "D": "Language List Access" }
+        { "P": "HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Search", "N": "BingSearchEnabled", "V": 0, "T": "DWord", "D": "Bing Search" }
     ],
     "ServicesToDisable": ["DiagTrack", "dmwappushservice", "WerSvc", "SysMain", "WSearch"],
-    "DevApps": [
-        { "Id": "Git.Git", "Name": "Git" },
-        { "Id": "OpenJS.NodeJS.LTS", "Name": "NodeJS" },
-        { "Id": "Python.Python.3", "Name": "Python" },
-        { "Id": "Microsoft.VisualStudioCode", "Name": "VSCode" },
-        { "Id": "Docker.DockerDesktop", "Name": "Docker Desktop" }
-    ],
     "ScheduledTasksToDisable": [
         "\\Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser",
         "\\Microsoft\\Windows\\Application Experience\\ProgramDataUpdater",

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    WinOptimizer v2.0 - by NishantJLU
+    WinOptimizer v2.1 - by NishantJLU
 .DESCRIPTION
     A comprehensive Windows 10/11 optimization and setup utility.
 #>
@@ -12,7 +12,7 @@ param(
     [int]$RunModule = 0
 )
 
-$Version = "2.0.0"
+$Version = "2.1.0"
 
 # 1. Admin check & Relaunch
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -44,6 +44,7 @@ if (Test-Path $ConfigPath) {
 
 $LogFile = "$LogDir\$(Get-Date -Format 'yyyy-MM-dd_HH-mm').log"
 $global:GamingModeState = "OFF"
+$global:ActiveProfile = "None"
 
 # 3. Helpers
 function Write-Log {
@@ -128,7 +129,14 @@ function Restore-Backups {
 function Invoke-BloatwareNuke {
     Write-OutputColor "`n--- MODULE 1: Bloatware Nuke ---" "Cyan"
     if (-not (Ask-Confirm "Remove bloatware?")) { return }
-    $packages = $Config.Bloatware
+    
+    $packages = if ($global:ActiveProfile -ne "None") {
+        $Config.Profiles.$($global:ActiveProfile).Bloatware
+    } else {
+        # Fallback to a default list if no profile selected
+        @("Microsoft.XboxApp", "Microsoft.XboxGameOverlay", "Microsoft.XboxGamingOverlay", "Microsoft.ZuneMusic", "Microsoft.ZuneVideo")
+    }
+
     $count = 0
     $total = $packages.Count
     for ($i=0; $i -lt $total; $i++) {
@@ -187,9 +195,22 @@ function Invoke-DevMachineSetup {
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
         Write-OutputColor "winget not found." "Red"; return
     }
+    
+    $apps = if ($global:ActiveProfile -ne "None") {
+        $Config.Profiles.$($global:ActiveProfile).DevApps
+    } else {
+        @()
+    }
+
+    if ($apps.Count -eq 0) {
+        Write-OutputColor "No apps defined for current profile ($global:ActiveProfile)." "Yellow"
+        return
+    }
+
     if (-not (Test-Path "C:\DevSetup")) { New-Item "C:\DevSetup" -ItemType Directory | Out-Null }
     $sum = "C:\DevSetup\setup-summary.txt"
     "Dev Setup $(Get-Date)" | Out-File $sum
+    
     function Install-App {
         param($Id, $Name)
         if (winget list --id $Id --exact -ErrorAction SilentlyContinue) {
@@ -202,7 +223,8 @@ function Invoke-DevMachineSetup {
             }
         }
     }
-    foreach ($app in $Config.DevApps) {
+    
+    foreach ($app in $apps) {
         Install-App $app.Id $app.Name
     }
 }
@@ -343,7 +365,6 @@ function Invoke-SafeUninstall {
         if (Ask-Confirm "Are you sure you want to proceed?") {
             if (-not $DryRun) { 
                 Write-OutputColor "Launching uninstaller..." "Cyan"
-                # Handle cases where uninstall string is quoted or has arguments
                 if ($app.UninstallString -match '^".*"') {
                     $cmd = $app.UninstallString
                     cmd.exe /c $cmd
@@ -377,7 +398,6 @@ function Invoke-FocusMode {
         $block = "`n# FocusMode-START`n127.0.0.1 youtube.com`n127.0.0.1 reddit.com`n127.0.0.1 facebook.com`n127.0.0.1 twitter.com`n127.0.0.1 instagram.com`n# FocusMode-END`n"
         Add-Content $h $block; ipconfig /flushdns | Out-Null
         
-        # Schedule auto-disable
         $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-Command `"`$c = Get-Content '$h' -Raw; `$new = `$c -replace '(?s)# FocusMode-START.*?# FocusMode-END\r?\n?', ''; Set-Content '$h' `$new; ipconfig /flushdns`""
         $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddHours([double]$hrs)
         Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "DisableFocusMode" -User "SYSTEM" -Force | Out-Null
@@ -445,6 +465,64 @@ function Invoke-ContextMenuCleanup {
     }
 }
 
+# --- Module 15: Restore Center ---
+function Invoke-RestoreCenter {
+    Write-OutputColor "`n--- MODULE 15: Restore Center ---" "Cyan"
+    $menu = @"
+[1] Restore Registry from Backup (.reg files)
+[2] Open System Restore (rstrui.exe)
+[3] Open Windows Recovery Settings
+[B] Back to Main Menu
+"@
+    Write-Host $menu -ForegroundColor Yellow
+    $sel = Read-Host "Select option"
+    switch ($sel) {
+        "1" {
+            $files = Get-ChildItem -Path $BackupDir -Filter *.reg
+            if ($files.Count -eq 0) { Write-OutputColor "No backups found." "Red"; return }
+            for ($i=0; $i -lt $files.Count; $i++) { Write-Host "[$i] $($files[$i].Name)" }
+            $fsel = Read-Host "Select file index to restore"
+            if ($fsel -ne "" -and [int]$fsel -lt $files.Count) {
+                $file = $files[[int]$fsel]
+                Write-OutputColor "Restoring $($file.Name)..." "Cyan"
+                if (-not $DryRun) { reg import $file.FullName }
+            }
+        }
+        "2" {
+            Write-OutputColor "Launching System Restore UI..." "Cyan"
+            Start-Process "rstrui.exe"
+        }
+        "3" {
+            Write-OutputColor "Opening Recovery Settings..." "Cyan"
+            Start-Process "ms-settings:recovery"
+        }
+        "B" { return }
+    }
+}
+
+# --- Profile Selector ---
+function Invoke-ProfileSelector {
+    Write-OutputColor "`n--- Select User Profile ---" "Cyan"
+    $profiles = $Config.Profiles.psobject.properties
+    $i = 1
+    $plist = @()
+    foreach ($p in $profiles) {
+        Write-Host "[$i] $($p.Name) - $($p.Value.Description)"
+        $plist += $p.Name
+        $i++
+    }
+    Write-Host "[N] None / Manual Only"
+    $sel = Read-Host "`nPick a profile"
+    if ($sel -match "^\d+$" -and [int]$sel -le $plist.Count) {
+        $global:ActiveProfile = $plist[[int]$sel - 1]
+        Write-OutputColor "Profile set to: $global:ActiveProfile" "Green"
+    } else {
+        $global:ActiveProfile = "None"
+        Write-OutputColor "No profile active. Using manual selections." "Yellow"
+    }
+    Read-Host "Press Enter to continue..."
+}
+
 # --- Main Menu ---
 function Show-Menu {
     Clear-Host
@@ -460,8 +538,10 @@ function Show-Menu {
 |  [6] Gaming Mode Toggle      [13] Update All (Winget) |
 |  [7] Network Reset           [14] Context Menu Nuke   |
 +-------------------------------------------------------+
-|  [A] Run Essential (1,2,5,10,13)   [R] Restore Reg    |
-|  [S] Create Restore Point          [Q] Quit           |
+|  [P] Select Profile (Active: $global:ActiveProfile)           |
+|  [15] RESTORE CENTER         [A] Run Essential        |
+|  [R] Restore All Reg         [S] Create Restore Point |
+|  [Q] Quit                                             |
 +-------------------------------------------------------+
   State: Gaming Mode [$global:GamingModeState]
 "@
@@ -471,6 +551,7 @@ function Show-Menu {
 # Start Logic
 if ($Restore) { Restore-Backups; exit }
 if ($RunModule -gt 0) {
+    # Non-interactive CLI support (profiles ignored unless pre-set)
     switch ($RunModule) {
         1 { Invoke-BloatwareNuke }
         2 { Invoke-PrivacyHardener }
@@ -486,12 +567,15 @@ if ($RunModule -gt 0) {
         12 { Invoke-SystemIntegrity }
         13 { Invoke-UpdateSystem }
         14 { Invoke-ContextMenuCleanup }
+        15 { Invoke-RestoreCenter }
     }
     exit
 }
 
 # Interactive Mode
 Create-RestorePoint
+Invoke-ProfileSelector
+
 while ($true) {
     Show-Menu
     $choice = Read-Host "`nSelect an option"
@@ -510,6 +594,8 @@ while ($true) {
         "12" { Invoke-SystemIntegrity }
         "13" { Invoke-UpdateSystem }
         "14" { Invoke-ContextMenuCleanup }
+        "15" { Invoke-RestoreCenter }
+        "P" { Invoke-ProfileSelector }
         "A" { 
             Invoke-BloatwareNuke
             Invoke-PrivacyHardener
